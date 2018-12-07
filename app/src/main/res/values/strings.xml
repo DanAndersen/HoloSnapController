@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">STARController</string>
+
+    <!-- Strings related to parameters -->
+    <string name="param_ip">IP</string>
+    <string name="param_port">Port</string>
+
+    <!-- Strings related to setup -->
+    <string name="prompt_IP">IP address</string>
+    <string name="error_invalid_email">Invalid IP address!</string>
+    <string name="prompt_port">Port (default 12345)</string>
+    <string name="error_invalid_port">Invalid Port!</string>
+    <string name="action_connect">Connect</string>
+    <string name="action_debug">Debug</string>
+
+    <!-- Strings related to main -->
+    <string name="title_activity_main">Controls</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_params">Params</string>
+    <string name="title_logs">Logs</string>
+    <string name="title_status">Status</string>
+
+    <!-- Strings related to socket -->
+    <string name="socket_disconnect">DISCONNECT</string>
+    <string name="socket_control">CONTROL</string>
+    <string name="socket_log">LOG</string>
+    <string name="socket_status">STATUS</string>
+    <string name="socket_end">END</string>
+    <string name="socket_button_format">{%s:\"null\"}\n</string>
+    <string name="socket_format">{%s:\"%s\"}\n</string>
+
+</resources>
