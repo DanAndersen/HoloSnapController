@@ -20,6 +20,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -79,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
                         mWriter.flush();
                     }
                 } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });*/
@@ -151,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 Thread.sleep(1000);
             } catch (Exception e) {
+                e.printStackTrace();
             }
             Bundle bundle = getIntent().getExtras();
             if (bundle != null) {
@@ -176,12 +179,14 @@ public class MainActivity extends AppCompatActivity {
                                 publishProgress(type, message);
                             }
                         } catch (SocketTimeoutException e) {
+                            e.printStackTrace();
                         } catch (SocketException e) {
                             publishProgress(getString(R.string.socket_disconnect));
                             Snackbar.make(mView, "Disconnected!", Snackbar.LENGTH_LONG).show();
                         }
                     }
                 } catch (Exception e) {
+                    e.printStackTrace();
                 }
             } else {
                 publishProgress("CONTROL", "Checker_X:9;Checker_Y:6;Checker_Size:0.05;Visual_Checkerboard:True;Visual_HololensCamera:False;Button_TakePicture:;Button_Test:;Visual_InformationPane:True;Visual_SpatialMap:False;AnnotationServer_IP:128.46.125.52;AnnotationServer_Port:8988;Visual_AnnotationRays:False;AnnotationTool_Scale:1;AnnotationTool_Offset:0;AnnotationPolyline_LineWidth:0.015;AnnotationPolyline_BrightnessMultiplier:1;Annotation_Anchor:True;Annotation_Update:True;Annotation_DummyDiagonal:0;Annotation_DummyDense:300;Visual_TopdownCamera:False;Visual_FPSCounter:True;");
@@ -214,6 +219,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 mSocket.close();
             } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 
@@ -222,6 +228,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 mSocket.close();
             } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -348,6 +355,7 @@ public class MainActivity extends AppCompatActivity {
                     mWriter.flush();
                 }
             } catch (Exception e) {
+                e.printStackTrace();
             }
             return true;
         }
@@ -361,6 +369,7 @@ public class MainActivity extends AppCompatActivity {
                     mWriter.flush();
                 }
             } catch (Exception e) {
+                e.printStackTrace();
             }
             return true;
         }
