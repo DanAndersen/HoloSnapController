@@ -346,32 +346,48 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public boolean onPreferenceChange(Preference preference, Object newValue) {
-            try {
-                String key = preference.getKey();
-                String value = newValue.toString();
-                preference.setSummary(value);
-                if (mSocket.isConnected()) {
-                    mWriter.write(String.format(getString(R.string.socket_format), key, value));
-                    mWriter.flush();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            String key = preference.getKey();
+            String value = newValue.toString();
+            preference.setSummary(value);
+
+            String stringToSend = String.format(getString(R.string.socket_format), key, value);
+
+            new SendStringTask().execute(stringToSend);
+
             return true;
         }
 
         @Override
         public boolean onPreferenceClick(Preference preference) {
-            try {
-                String key = preference.getKey();
-                if (mSocket.isConnected()) {
-                    mWriter.write(String.format(getString(R.string.socket_button_format), key));
-                    mWriter.flush();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            String key = preference.getKey();
+
+            String stringToSend = String.format(getString(R.string.socket_button_format), key);
+
+            new SendStringTask().execute(stringToSend);
+
             return true;
+        }
+    }
+
+
+
+
+    private static class SendStringTask extends AsyncTask<String, Void, Void> {
+
+        @Override
+        protected Void doInBackground(String... strs) {
+            for (String str: strs) {
+
+                try {
+                    if (mSocket.isConnected()) {
+                        mWriter.write(str);
+                        mWriter.flush();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            return null;
         }
     }
 
