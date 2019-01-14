@@ -10,11 +10,12 @@ import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.inputmethod.EditorInfo;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+
+import net.sourceforge.opencamera.MainActivity;
 
 public class SetupActivity extends AppCompatActivity {
 
@@ -36,7 +37,7 @@ public class SetupActivity extends AppCompatActivity {
         TextView.OnEditorActionListener imeListener = new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                validateAndConnect();
+                validateAndConnect(ControllerMainActivity.class);
                 return true;
             }
         };
@@ -47,20 +48,27 @@ public class SetupActivity extends AppCompatActivity {
         connectButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                validateAndConnect();
+                validateAndConnect(ControllerMainActivity.class);
             }
         });
         Button debugButton = (Button) findViewById(R.id.debug_button);
         debugButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(SetupActivity.this, MainActivity.class);
+                Intent intent = new Intent(SetupActivity.this, ControllerMainActivity.class);
                 startActivity(intent);
+            }
+        });
+        Button openCameraButton = (Button) findViewById(R.id.open_camera_button);
+        openCameraButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                validateAndConnect(MainActivity.class);
             }
         });
     }
 
-    private void validateAndConnect() {
+    private void validateAndConnect(Class destinationActivityClass) {
         // Reset errors.
         mIPView.setError(null);
         mPortView.setError(null);
@@ -90,7 +98,7 @@ public class SetupActivity extends AppCompatActivity {
                     .putString(getString(R.string.param_ip), ip)
                     /*.putString(getString(R.string.param_port), port)*/
                     .apply();
-            Intent intent = new Intent(SetupActivity.this, MainActivity.class);
+            Intent intent = new Intent(SetupActivity.this, destinationActivityClass);
             intent.putExtra(getString(R.string.param_ip), ip);
             intent.putExtra(getString(R.string.param_port), TextUtils.isEmpty(port) ? "12345" : port);
             startActivity(intent);
