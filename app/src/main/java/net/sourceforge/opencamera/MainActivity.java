@@ -8,9 +8,17 @@ import net.sourceforge.opencamera.UI.FolderChooserDialog;
 import net.sourceforge.opencamera.UI.MainUI;
 import net.sourceforge.opencamera.UI.ManualSeekbars;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
@@ -63,6 +71,7 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.Display;
 import android.view.GestureDetector;
@@ -143,7 +152,130 @@ public class MainActivity extends Activity {
 	public volatile boolean test_have_angle;
 	public volatile float test_angle;
 	public volatile String test_last_saved_image;
-	
+
+
+
+
+
+
+	// For communicating with remote Unity app
+	private static SocketTask mTask;
+	private static Socket mSocket;
+	private static BufferedReader mReader;
+	private static BufferedWriter mWriter;
+
+
+
+
+
+	public class SocketTask extends AsyncTask<Void, String, Void> {
+		@Override
+		protected Void doInBackground(Void... params) {
+			try {
+				Thread.sleep(1000);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			Bundle bundle = getIntent().getExtras();
+			if (bundle != null) {
+				String ip = bundle.getString(getString(R.string.param_ip));
+				String port = bundle.getString(getString(R.string.param_port));
+				try {
+					while (true) {
+						try {
+							mSocket = new Socket();
+							mSocket.connect(new InetSocketAddress(ip, Integer.parseInt(port)), 1000);
+							mReader = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
+							mWriter = new BufferedWriter(new OutputStreamWriter(mSocket.getOutputStream()));
+							while (true) {
+								String type = mReader.readLine();
+								StringBuilder sb = new StringBuilder();
+								String message = mReader.readLine();
+								sb.append(message);
+								while ((message = mReader.readLine()).compareTo(getString(R.string.socket_end)) != 0) {
+									sb.append('\n');
+									sb.append(message);
+								}
+								message = sb.toString();
+								publishProgress(type, message);
+							}
+						} catch (SocketTimeoutException e) {
+							e.printStackTrace();
+						} catch (SocketException e) {
+							publishProgress(getString(R.string.socket_disconnect));
+
+							//Snackbar.make(mView, "Disconnected!", Snackbar.LENGTH_LONG).show();
+						}
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			} else {
+				publishProgress("CONTROL", "Checker_X:9;Checker_Y:6;Checker_Size:0.05;Visual_Checkerboard:True;Visual_HololensCamera:False;Button_TakePicture:;Button_Test:;Visual_InformationPane:True;Visual_SpatialMap:False;AnnotationServer_IP:128.46.125.52;AnnotationServer_Port:8988;Visual_AnnotationRays:False;AnnotationTool_Scale:1;AnnotationTool_Offset:0;AnnotationPolyline_LineWidth:0.015;AnnotationPolyline_BrightnessMultiplier:1;Annotation_Anchor:True;Annotation_Update:True;Annotation_DummyDiagonal:0;Annotation_DummyDense:300;Visual_TopdownCamera:False;Visual_FPSCounter:True;");
+				publishProgress("LOG", "testtest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\n");
+			}
+			return null;
+		}
+
+		@Override
+		protected  void onProgressUpdate(String... values) {
+			String key = values[0];
+			if (key.compareTo(getString(R.string.socket_disconnect)) == 0) {
+
+				//mParamsFragment.set(null);
+				//mLogFragment.set(null);
+				//mStatusFragment.set(null);
+			} else {
+				String value = values[1];
+				if (key.compareTo(getString(R.string.socket_control)) == 0) {
+					//mParamsFragment.set(value);
+				} else if (key.compareTo(getString(R.string.socket_log)) == 0) {
+					//mLogFragment.set(value);
+				} else if (key.compareTo(getString(R.string.socket_status)) == 0) {
+					//mStatusFragment.set(value);
+				}
+			}
+		}
+
+		@Override
+		protected void onPostExecute(Void result) {
+			try {
+				mSocket.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		protected void onCancelled() {
+			try {
+				mSocket.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private static class SendStringTask extends AsyncTask<String, Void, Void> {
+
+		@Override
+		protected Void doInBackground(String... strs) {
+			for (String str: strs) {
+
+				try {
+					if (mSocket.isConnected()) {
+						mWriter.write(str);
+						mWriter.flush();
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			return null;
+		}
+	}
+
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		long debug_time = 0;
@@ -481,6 +613,11 @@ public class MainActivity extends Activity {
 
 		if( MyDebug.LOG )
 			Log.d(TAG, "onCreate: total time for Activity startup: " + (System.currentTimeMillis() - debug_time));
+
+
+		mTask = new SocketTask();
+		mTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
 	}
 
 	/* This method sets the preference defaults which are set specific for a particular device.
@@ -683,7 +820,13 @@ public class MainActivity extends Activity {
 			Log.d(TAG, "size of preloaded_bitmap_resources: " + preloaded_bitmap_resources.size());
 		}
 	}
-	
+
+	@Override
+	protected void onStop() {
+		mTask.cancel(true);
+		super.onStop();
+	}
+
 	@Override
 	protected void onDestroy() {
 		if( MyDebug.LOG ) {
@@ -2827,6 +2970,15 @@ public class MainActivity extends Activity {
 		}
 
     	this.preview.takePicturePressed(photo_snapshot);
+
+		// send a message to the remote app telling it we took a picture
+		String key = "Camera_TakePicture";
+		String stringToSend = String.format(getString(R.string.socket_button_format), key);
+		new SendStringTask().execute(stringToSend);
+
+
+
+
 	}
     
     /** Lock the screen - this is Open Camera's own lock to guard against accidental presses,

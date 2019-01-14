@@ -54,7 +54,6 @@ public class ControllerMainActivity extends AppCompatActivity {
     private static Socket mSocket;
     private static BufferedReader mReader;
     private static BufferedWriter mWriter;
-    //private static String mFABCommand;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
