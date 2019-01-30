@@ -201,7 +201,12 @@ public class ControllerMainActivity extends AppCompatActivity {
                 mParamsFragment.set(null);
                 mLogFragment.set(null);
                 mStatusFragment.set(null);
-            } else {
+            } else if (key.compareTo("AUTOCAPTURE_ENTERED_RANGE") == 0) {
+                Snackbar.make(mView, "MOCK Autocapture: entered range of target location", Snackbar.LENGTH_SHORT).show();
+            }else if (key.compareTo("AUTOCAPTURE_EXITED_RANGE") == 0) {
+                Snackbar.make(mView, "MOCK Autocapture: exited range of target location", Snackbar.LENGTH_SHORT).show();
+            }
+            else {
                 String value = values[1];
                 if (key.compareTo(getString(R.string.socket_control)) == 0) {
                     mParamsFragment.set(value);
