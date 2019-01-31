@@ -97,6 +97,13 @@ public class MainActivity extends Activity {
 	private static final String TAG = "MainActivity";
 	private SensorManager mSensorManager;
 	private Sensor mSensorAccelerometer;
+
+
+
+	private Sensor mLinearAccelerometer;
+
+
+
 	private Sensor mSensorMagnetic;
 	private MainUI mainUI;
 	private PermissionHandler permissionHandler;
@@ -168,6 +175,10 @@ public class MainActivity extends Activity {
 
 
 
+
+
+
+
 	public class SocketTask extends AsyncTask<Void, String, Void> {
 		@Override
 		protected Void doInBackground(Void... params) {
@@ -225,6 +236,12 @@ public class MainActivity extends Activity {
 				//mParamsFragment.set(null);
 				//mLogFragment.set(null);
 				//mStatusFragment.set(null);
+			} else if (key.compareTo("AUTOCAPTURE_ENTERED_RANGE") == 0) {
+				Log.d(TAG, "Autocapture: entered range of target location");
+				mInRange = true;
+			} else if (key.compareTo("AUTOCAPTURE_EXITED_RANGE") == 0) {
+				Log.d(TAG, "Autocapture: exited range of target location");
+				mInRange = false;
 			} else {
 				String value = values[1];
 				if (key.compareTo(getString(R.string.socket_control)) == 0) {
@@ -367,6 +384,22 @@ public class MainActivity extends Activity {
 
 		// set up sensors
         mSensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
+
+        // linear accelerometer for HoloSnap
+		if (mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION) != null) {
+			if (MyDebug.LOG)
+				Log.d(TAG, "found linear accelerometer");
+			mLinearAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+		}
+		else {
+			if( MyDebug.LOG )
+				Log.d(TAG, "no support for linear accelerometer");
+		}
+
+
+
+
+
 
         // accelerometer sensor (for device orientation)
         if( mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null ) {
@@ -979,6 +1012,83 @@ public class MainActivity extends Activity {
 			preview.onAccelerometerSensorChanged(event);
 		}
 	};
+
+	private boolean mInRange = false; // to be set by external 6dof tracker
+
+	// the listener we use for the HoloSnap autocapture
+	private final SensorEventListener accelerometerListenerHoloSnap = new SensorEventListener() {
+
+
+
+		private float mLinearAccelerationThreshold = 1.0f; // m/s^2
+		private boolean mInHoldingPosition = false;
+		private long mStartHoldingPositionTimestampUs = Long.MAX_VALUE;
+		private long mWaitLengthUs = 300000000L;
+
+		@Override
+		public void onAccuracyChanged(Sensor sensor, int accuracy) {
+		}
+
+		@Override
+		public void onSensorChanged(SensorEvent event) {
+
+			if (event.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
+				// getting the linear acceleration, ignoring gravity
+
+				float lin_acc_x = event.values[0];
+				float lin_acc_y = event.values[1];
+				float lin_acc_z = event.values[2];
+
+				float lin_acc_magnitude = (float)Math.sqrt(lin_acc_x*lin_acc_x + lin_acc_y*lin_acc_y + lin_acc_z*lin_acc_z);
+
+				//Log.i("LIN_ACC", lin_acc_x + "\t" + lin_acc_y + "\t" + lin_acc_z + "\t" + lin_acc_magnitude);
+
+				long currentTimestampUs = event.timestamp;
+
+				if (lin_acc_magnitude < mLinearAccelerationThreshold) {
+					// phone is being held in place
+
+					if (mInRange) {
+						// we have determined (externally) that the phone is within the 6dof range of some target
+
+						if (!mInHoldingPosition) {
+							// begin holding position
+							mStartHoldingPositionTimestampUs = currentTimestampUs;
+							mInHoldingPosition = true;
+							Log.i("START_HOLD", "starting holding in place");
+						}
+
+						long elapsedUs = (currentTimestampUs - mStartHoldingPositionTimestampUs);
+
+						if (elapsedUs > mWaitLengthUs) {
+							// take picture here
+							Log.i("TAKE_PIC", "taking pic");
+							MainActivity.this.takePicture(false);
+
+							mInRange = false; // the pic has been taken and the bubble is gone, so we cannot be in range again
+						}
+
+					}
+				} else {
+					if (mInHoldingPosition) {
+						Log.i("STOP_HOLD", "stopping holding in place");
+					}
+
+					mInHoldingPosition = false;
+					mStartHoldingPositionTimestampUs = Long.MAX_VALUE;
+				}
+
+
+
+			}
+
+
+
+
+
+
+		}
+	};
 	
 	private int magnetic_accuracy = -1;
 	private AlertDialog magnetic_accuracy_dialog;
@@ -1178,6 +1288,9 @@ public class MainActivity extends Activity {
 		getWindow().getDecorView().getRootView().setBackgroundColor(Color.BLACK);
 
         mSensorManager.registerListener(accelerometerListener, mSensorAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+
+        mSensorManager.registerListener(accelerometerListenerHoloSnap, mLinearAccelerometer, SensorManager.SENSOR_DELAY_GAME); // for my own HoloSnap auto-capture
+
         registerMagneticListener();
         orientationEventListener.enable();
 
@@ -1225,6 +1338,9 @@ public class MainActivity extends Activity {
         super.onPause(); // docs say to call this before freeing other things
         mainUI.destroyPopup(); // important as user could change/reset settings from Android settings when pausing
         mSensorManager.unregisterListener(accelerometerListener);
+
+		mSensorManager.unregisterListener(accelerometerListenerHoloSnap);
+
         unregisterMagneticListener();
         orientationEventListener.disable();
         try {
