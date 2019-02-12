@@ -273,7 +273,7 @@ public class MainActivity extends Activity {
 		}
 	}
 
-	private static class SendStringTask extends AsyncTask<String, Void, Void> {
+	public static class SendStringTask extends AsyncTask<String, Void, Void> {
 
 		@Override
 		protected Void doInBackground(String... strs) {
@@ -3088,15 +3088,15 @@ public class MainActivity extends Activity {
     	this.preview.takePicturePressed(photo_snapshot);
 
 		// send a message to the remote app telling it we took a picture
-		String key = "Camera_TakePicture";
-		String stringToSend = String.format(getString(R.string.socket_button_format), key);
-		new SendStringTask().execute(stringToSend);
+//		String key = "Camera_TakePicture";
+//		String stringToSend = String.format(getString(R.string.socket_button_format), key);
+//		new SendStringTask().execute(stringToSend);
 
 
 
 
 	}
-    
+
     /** Lock the screen - this is Open Camera's own lock to guard against accidental presses,
      *  not the standard Android lock.
      */

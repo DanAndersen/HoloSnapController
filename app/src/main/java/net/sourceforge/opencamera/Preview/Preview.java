@@ -1,6 +1,7 @@
 package net.sourceforge.opencamera.Preview;
 
 import net.sourceforge.opencamera.CameraController.RawImage;
+import net.sourceforge.opencamera.MainActivity;
 import net.sourceforge.opencamera.MyDebug;
 //import net.sourceforge.opencamera.R;
 import lin553.starcontroller.R;
@@ -5605,6 +5606,9 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 				if( remaining_repeat_photos == -1 || remaining_repeat_photos > 0 ) {
 					takeRemainingRepeatPhotos();
 				}
+//				String key = "Camera_TakePicture";
+//				String stringToSend = String.format(getString(R.string.socket_button_format), key);
+				new MainActivity.SendStringTask().execute("{Camera_TakePicture:\"null\"}\n");
 			}
 
 			/** Ensures we get the same date for both JPEG and RAW; and that we set the date ASAP so that it corresponds to actual
