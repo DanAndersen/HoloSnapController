@@ -1056,6 +1056,11 @@ public class MainActivity extends Activity {
 							mStartHoldingPositionTimestampUs = currentTimestampUs;
 							mInHoldingPosition = true;
 							Log.i("START_HOLD", "starting holding in place");
+
+
+							String key = "Camera_StartHold";
+							String stringToSend = String.format(getString(R.string.socket_button_format), key);
+							new SendStringTask().execute(stringToSend);
 						}
 
 						long elapsedUs = (currentTimestampUs - mStartHoldingPositionTimestampUs);
@@ -1072,6 +1077,10 @@ public class MainActivity extends Activity {
 				} else {
 					if (mInHoldingPosition) {
 						Log.i("STOP_HOLD", "stopping holding in place");
+
+						String key = "Camera_StopHold";
+						String stringToSend = String.format(getString(R.string.socket_button_format), key);
+						new SendStringTask().execute(stringToSend);
 					}
 
 					mInHoldingPosition = false;
